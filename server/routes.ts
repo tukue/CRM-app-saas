@@ -1,6 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import commercialRoutes from "./commercial-routes";
 import { insertCustomerSchema, insertSalesDataSchema } from "@shared/schema";
 import { validateRequestBody, validateRequestParams } from "./middleware/validation";
 import { asyncHandler, CustomError } from "./middleware/errorHandler";
@@ -146,6 +147,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(201).json(salesData);
     })
   );
+
+  // Add commercial CRM routes
+  app.use("/api/commercial", commercialRoutes);
 
   const httpServer = createServer(app);
 
