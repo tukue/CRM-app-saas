@@ -5,6 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { useQuery } from "@tanstack/react-query";
 import { 
   BarChart, 
   Bar, 
@@ -28,19 +29,20 @@ import {
   Search,
   Filter
 } from "lucide-react";
+import type { Customer, SalesData } from "@shared/schema";
 
 const Dashboard = () => {
   const [searchTerm, setSearchTerm] = useState("");
 
-  // Sample data for charts
-  const salesData = [
-    { month: 'Jan', revenue: 12000, deals: 24 },
-    { month: 'Feb', revenue: 15000, deals: 31 },
-    { month: 'Mar', revenue: 18000, deals: 28 },
-    { month: 'Apr', revenue: 22000, deals: 35 },
-    { month: 'May', revenue: 25000, deals: 42 },
-    { month: 'Jun', revenue: 28000, deals: 38 }
-  ];
+  // Fetch customers from API
+  const { data: customers = [], isLoading: customersLoading } = useQuery<Customer[]>({
+    queryKey: ['/api/customers'],
+  });
+
+  // Fetch sales data from API
+  const { data: salesData = [], isLoading: salesLoading } = useQuery<SalesData[]>({
+    queryKey: ['/api/sales-data'],
+  });
 
   const pipelineData = [
     { name: 'Prospects', value: 45, color: '#8884d8' },
@@ -49,18 +51,17 @@ const Dashboard = () => {
     { name: 'Closed Won', value: 12, color: '#ff7c7c' }
   ];
 
-  const customers = [
-    { id: 1, name: 'Acme Corp', email: 'contact@acme.com', status: 'Active', value: '$15,000', lastContact: '2 days ago' },
-    { id: 2, name: 'TechStart Inc', email: 'hello@techstart.com', status: 'Prospect', value: '$8,500', lastContact: '1 week ago' },
-    { id: 3, name: 'Global Solutions', email: 'info@global.com', status: 'Active', value: '$22,000', lastContact: '3 days ago' },
-    { id: 4, name: 'Digital Agency', email: 'team@digital.com', status: 'Negotiation', value: '$12,300', lastContact: '5 days ago' }
-  ];
+  // Calculate metrics from real data
+  const totalCustomers = customers.length;
+  const totalRevenue = salesData.reduce((sum, item) => sum + parseFloat(item.revenue), 0);
+  const totalDeals = salesData.reduce((sum, item) => sum + item.deals, 0);
+  const activeCustomers = customers.filter(c => c.status === 'active').length;
 
   const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'Active': return 'bg-green-100 text-green-800';
-      case 'Prospect': return 'bg-blue-100 text-blue-800';
-      case 'Negotiation': return 'bg-yellow-100 text-yellow-800';
+    switch (status.toLowerCase()) {
+      case 'active': return 'bg-green-100 text-green-800';
+      case 'prospect': return 'bg-blue-100 text-blue-800';
+      case 'negotiation': return 'bg-yellow-100 text-yellow-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
@@ -101,10 +102,10 @@ const Dashboard = () => {
                   <Users className="h-4 w-4 text-blue-600" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-gray-900">1,247</div>
+                  <div className="text-2xl font-bold text-gray-900">{customersLoading ? 'Loading...' : totalCustomers}</div>
                   <p className="text-xs text-green-600 flex items-center mt-1">
                     <TrendingUp className="h-3 w-3 mr-1" />
-                    12% from last month
+                    {activeCustomers} active
                   </p>
                 </CardContent>
               </Card>
@@ -115,10 +116,10 @@ const Dashboard = () => {
                   <DollarSign className="h-4 w-4 text-green-600" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-gray-900">$28,450</div>
+                  <div className="text-2xl font-bold text-gray-900">{salesLoading ? 'Loading...' : `$${totalRevenue.toLocaleString()}`}</div>
                   <p className="text-xs text-green-600 flex items-center mt-1">
                     <TrendingUp className="h-3 w-3 mr-1" />
-                    8% from last month
+                    {totalDeals} total deals
                   </p>
                 </CardContent>
               </Card>
@@ -245,8 +246,8 @@ const Dashboard = () => {
                               {customer.status}
                             </Badge>
                           </td>
-                          <td className="py-4 px-4 font-medium">{customer.value}</td>
-                          <td className="py-4 px-4 text-gray-600">{customer.lastContact}</td>
+                          <td className="py-4 px-4 font-medium">${customer.value}</td>
+                          <td className="py-4 px-4 text-gray-600">{customer.lastContact ? new Date(customer.lastContact).toLocaleDateString() : 'Never'}</td>
                           <td className="py-4 px-4">
                             <Button variant="outline" size="sm">View</Button>
                           </td>
