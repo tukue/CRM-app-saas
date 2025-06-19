@@ -1,12 +1,28 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { globalErrorHandler, notFoundHandler } from "./middleware/errorHandler";
+import { generalLimiter } from "./middleware/rateLimiter";
 import promMid from "express-prometheus-middleware";
 import client from "prom-client";
 
 const app = express();
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+
+// Security headers
+app.use((req: Request, res: Response, next: NextFunction) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  next();
+});
+
+// Body parsing middleware
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: false, limit: '10mb' }));
+
+// General rate limiting
+app.use(generalLimiter);
 
 // Add Prometheus middleware
 app.use(promMid({
@@ -48,14 +64,6 @@ app.use((req, res, next) => {
 (async () => {
   const server = await registerRoutes(app);
 
-  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-    const status = err.status || err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
-
-    res.status(status).json({ message });
-    throw err;
-  });
-
   // importantly only setup vite in development and after
   // setting up all the other routes so the catch-all route
   // doesn't interfere with the other routes
@@ -64,6 +72,12 @@ app.use((req, res, next) => {
   } else {
     serveStatic(app);
   }
+
+  // 404 handler for undefined routes (after Vite middleware)
+  app.use(notFoundHandler);
+  
+  // Global error handler
+  app.use(globalErrorHandler);
 
   // ALWAYS serve the app on port 5000
   // this serves both the API and the client.

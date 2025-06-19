@@ -71,11 +71,26 @@ CREATE TABLE sales_data (
 - **Customer Management**: View, search, and manage customer data
 - **Responsive Design**: Works on desktop and mobile devices
 
+### Security & Best Practices
+- **Input Validation**: Zod schema validation for all API endpoints
+- **Rate Limiting**: Configurable rate limits for API protection
+- **Error Handling**: Comprehensive error tracking and logging
+- **Security Headers**: XSS protection, content type validation
+- **Authentication Ready**: JWT token authentication middleware
+
 ### Monitoring & Observability
 - **Prometheus Integration**: Automatic metrics collection
-- **Custom Metrics**: API response times, request counts, error rates
+- **Custom Business Metrics**: Customer count, revenue tracking
 - **Health Checks**: Application and database monitoring
+- **Performance Tracking**: Request duration and error rate monitoring
 - **Grafana Ready**: Pre-configured dashboards for visualization
+
+### Testing & Quality
+- **Unit Tests**: Comprehensive test coverage for backend
+- **Integration Tests**: API endpoint testing with SuperTest
+- **Schema Validation Tests**: Data validation testing
+- **CI/CD Pipeline**: GitHub Actions for automated testing and deployment
+- **Code Quality**: ESLint, TypeScript, and test coverage reporting
 
 ## Setup & Installation
 
@@ -156,12 +171,21 @@ A pre-configured Grafana dashboard is available with:
 │   │   ├── pages/          # Application pages
 │   │   └── hooks/          # Custom React hooks
 ├── server/                 # Express backend
-│   ├── routes.ts           # API routes
+│   ├── routes.ts           # API routes with middleware
 │   ├── storage.ts          # Data access layer
-│   └── db.ts               # Database connection
+│   ├── db.ts               # Database connection
+│   ├── middleware/         # Express middleware
+│   │   ├── auth.ts         # Authentication middleware
+│   │   ├── validation.ts   # Request validation
+│   │   ├── errorHandler.ts # Error handling
+│   │   └── rateLimiter.ts  # Rate limiting
+│   └── __tests__/          # Unit and integration tests
 ├── shared/                 # Shared types and schemas
 │   └── schema.ts           # Database schema and validation
-└── monitoring/             # Monitoring configuration
+├── .github/workflows/      # CI/CD pipeline
+│   └── ci.yml              # GitHub Actions workflow
+├── BEST_PRACTICES.md       # Development best practices guide
+└── jest.config.js          # Test configuration
 ```
 
 ### Adding New Features
